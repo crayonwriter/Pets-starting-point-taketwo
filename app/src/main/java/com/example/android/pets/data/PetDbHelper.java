@@ -17,7 +17,7 @@ public class PetDbHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-// Create a String that contains the SQL statement to create the pets table
+        // Create a String that contains the SQL statement to create the pets table
         String SQL_CREATE_PETS_TABLE =  "CREATE TABLE " + PetEntry.TABLE_NAME + " ("
                 + PetEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
                 + PetEntry.COLUMN_PET_NAME + " TEXT NOT NULL, "
@@ -31,6 +31,6 @@ public class PetDbHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-// The database is still at version 1, so there's nothing to do be done here.
+        // The database is still at version 1, so there's nothing to do be done here.
     }
 }
