@@ -1,3 +1,5 @@
+package com.example.android.pets;
+
 import android.content.Context;
 import android.database.Cursor;
 import android.view.LayoutInflater;
