@@ -38,9 +38,11 @@ public class CatalogActivity extends AppCompatActivity {
             }
         });
 
-        // To access our database, we instantiate our subclass of SQLiteOpenHelper
-        // and pass the context, which is the current activity.
-        displayDatabaseInfo();
+        // Find the ListView which will be populated with the pet data
+        ListView petListView = (ListView) findViewById(R.id.listview_pet);
+        // Find and set empty view on the ListView, so that it only shows when the list has 0 items.
+        View emptyView = findViewById(R.id.empty_view);
+        petListView.setEmptyView(emptyView);
     }
 
     @Override
@@ -91,7 +93,6 @@ public class CatalogActivity extends AppCompatActivity {
     }
 
     private void insertPet() {
-
 
         ContentValues values = new ContentValues();
         values.put(PetEntry.COLUMN_PET_NAME, "Toto");
