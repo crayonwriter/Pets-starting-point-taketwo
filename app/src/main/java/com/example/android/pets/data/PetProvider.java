@@ -3,20 +3,17 @@ package com.example.android.pets.data;
 import android.content.ContentProvider;
 import android.content.ContentUris;
 import android.content.ContentValues;
-import android.content.Context;
 import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.util.Log;
 
-import static com.example.android.pets.data.PetContract.PetEntry.COLUMN_PET_BREED;
+import static com.example.android.pets.data.PetContract.PetEntry;
 import static com.example.android.pets.data.PetContract.PetEntry.COLUMN_PET_GENDER;
 import static com.example.android.pets.data.PetContract.PetEntry.COLUMN_PET_NAME;
 import static com.example.android.pets.data.PetContract.PetEntry.COLUMN_PET_WEIGHT;
-import static com.example.android.pets.data.PetContract.PetEntry.CONTENT_URI;
 import static com.example.android.pets.data.PetContract.PetEntry.TABLE_NAME;
-import static com.example.android.pets.data.PetContract.PetEntry;
 
 /**
  * {@link ContentProvider} for Pets app.
@@ -110,6 +107,11 @@ public class PetProvider extends ContentProvider {
             default:
                 throw new IllegalArgumentException("Cannot query unknown URI " + uri);
         }
+
+        //Set notification URI on the Cursor. If the data at this URI changes, then we know we
+        //need to update the Cursor.
+        cursor.setNotificationUri(getContext().getContentResolver(), uri);
+
         return cursor;
     }
 
@@ -158,6 +160,9 @@ public class PetProvider extends ContentProvider {
             Log.e(LOG_TAG, "Failed to insert row for " + uri);
             return null;
         }
+
+        //Notify all listeners that the data has changed for the pet content URI
+        getContext().getContentResolver().notifyChange(uri, null);
 
         // Return the new URI with the ID (of the newly inserted row) appended at the end
         return ContentUris.withAppendedId(uri, id);
@@ -218,8 +223,18 @@ public class PetProvider extends ContentProvider {
         // Otherwise, get writeable database to update the data
         SQLiteDatabase database = mDbHelper.getWritableDatabase();
 
-        // Returns the number of database rows affected by the update statement
-        return database.update(PetEntry.TABLE_NAME, values, selection, selectionArgs);
+        // Perform the update on the database and get the number of rows affected
+        int rowsUpdated = database.update(PetEntry.TABLE_NAME, values, selection, selectionArgs);
+
+        // If 1 or more rows were updated, then notify all listeners that the data at the
+        // given URI has changed
+        if (rowsUpdated != 0) {
+            getContext().getContentResolver().notifyChange(uri, null);
+        }
+
+        // Return the number of rows updated
+        return rowsUpdated;
+
     }
 
 
@@ -231,19 +246,31 @@ public class PetProvider extends ContentProvider {
             // Get writeable database
             SQLiteDatabase database = mDbHelper.getWritableDatabase();
 
+            // Track the number of rows that were deleted
+            int rowsDeleted;
+
             final int match = sUriMatcher.match(uri);
             switch (match) {
                 case PETS:
                     // Delete all rows that match the selection and selection args
-                    return database.delete(PetEntry.TABLE_NAME, selection, selectionArgs);
+                    rowsDeleted = database.delete(PetEntry.TABLE_NAME, selection, selectionArgs);
+                    break;
                 case PET_ID:
                     // Delete a single row given by the ID in the URI
                     selection = PetEntry._ID + "=?";
                     selectionArgs = new String[]{String.valueOf(ContentUris.parseId(uri))};
-                    return database.delete(PetEntry.TABLE_NAME, selection, selectionArgs);
-                default:
+                    rowsDeleted = database.delete(PetEntry.TABLE_NAME, selection, selectionArgs);
+                    break;
+                    default:
                     throw new IllegalArgumentException("Deletion is not supported for " + uri);
             }
+            // If 1 or more rows were deleted, then notify all listeners that the data at the
+            // given URI has changed
+            if (rowsDeleted != 0) {
+                getContext().getContentResolver().notifyChange(uri, null);
+            }
+            // Return the number of rows deleted
+            return rowsDeleted;
         }
 
         /**
