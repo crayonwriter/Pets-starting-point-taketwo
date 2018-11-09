@@ -234,7 +234,6 @@ public class PetProvider extends ContentProvider {
 
         // Return the number of rows updated
         return rowsUpdated;
-
     }
 
 
